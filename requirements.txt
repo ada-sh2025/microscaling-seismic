@@ -1,0 +1,4 @@
+devito
+matplotlib
+numpy
+pytest
