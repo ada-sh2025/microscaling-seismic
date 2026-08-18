@@ -129,6 +129,15 @@ Runs a water-everywhere model (same source, geometry and time-stepping, velocity
 to isolate the direct arrival, subtracts it to leave the reflections, and scores SNR(dB) on the
 reflections alone — the energy the image is actually built from. → `water_subtraction_results/`
 
+### 7b. Block shape — does a square block beat a memory strip?
+```bash
+python3 block_shape.py
+```
+Holds the block size and bit cost fixed and varies only the block shape, from a 1x32 memory
+strip to a 6x6 square, and times the pack/unpack of each. Shows the block-size anomaly is a
+shape effect (square blocks are ~4.6 dB more accurate at the same cost) and that the 2D tiling
+adds only a small pack/unpack overhead, negligible in a bandwidth-bound solver. → `block_shape_results/`
+
 ### 8. int16 diagnostic — why it underperforms, and how it becomes MX
 ```bash
 python3 int16_analysis.py
