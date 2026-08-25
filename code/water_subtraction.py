@@ -115,15 +115,21 @@ def main():
     t = np.linspace(0, TN / 1000.0, full_ref.shape[0])
     band = slice(NREC // 2 - 30, NREC // 2 + 30, 2)
     from mx_experiment_marmousi import _wiggle, WIGGLE_SATURATION
+    # Time-scaling gain, linear in t, a gentle correction for geometric spreading. It lifts the
+    # weak deep reflections so they are visible alongside the shallow ones without over-amplifying
+    # the noise the way a t-squared gain would. Applied to the reflection panel, where it matters;
+    # the full and water panels keep the saturated direct arrival.
+    tgain = ((t + 0.02) / np.mean(t + 0.02)) ** 1.0
     common = (np.max(np.abs(full_ref[:, band])) + 1e-30) / WIGGLE_SATURATION
-    common_r = (np.max(np.abs(refl_ref[:, band])) + 1e-30)
+    refl_scaled = refl_ref[:, band].astype(np.float64) * tgain[:, None]
+    common_r = (np.max(np.abs(refl_scaled)) + 1e-30) / 3.0
     fig, axes = plt.subplots(1, 3, figsize=(11, 6), sharey=True)
     _wiggle(axes[0], full_ref[:, band].astype(np.float64), t, norm=common)
     axes[0].set_title("full record"); axes[0].set_ylabel("time (s)")
     _wiggle(axes[1], water_ref[:, band].astype(np.float64), t, norm=common)
-    axes[1].set_title("water: direct arrival")
-    _wiggle(axes[2], refl_ref[:, band].astype(np.float64), t, norm=common_r)
-    axes[2].set_title("difference: reflections")
+    axes[1].set_title("water (direct only)")
+    _wiggle(axes[2], refl_scaled, t, norm=common_r)
+    axes[2].set_title("reflections (time-scaled)")
     for a in axes:
         a.set_xlabel("trace")
     fig.suptitle("Water-model subtraction removes the direct arrival and leaves the reflections",

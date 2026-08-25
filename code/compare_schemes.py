@@ -221,34 +221,42 @@ def plot_block_size(block_results, outdir):
 
 
 def plot_traces(rec_ref, traces, outdir):
-    """What the competing schemes do to the recorded data, shown as wiggle gathers.
+    """How far each scheme departs from full precision, shown as a time-scaled difference gather.
 
-    The shot record is what an imaging algorithm is handed, so this is the most practical way of
-    judging a format. Each scheme is drawn as a wiggle gather of the same band of traces, on one
-    common amplitude scale, next to the full precision gather. A scheme that reproduces the data
-    looks like the reference; a scheme that distorts it, such as bfloat16, shows visibly wrong
-    wiggles, especially on the weaker later arrivals.
+    Drawing the gathers themselves is not very telling here, because at a usable setting MX and
+    FP16 both reproduce the record closely and the panels look alike. What matters is the
+    difference from full precision, so this plots exactly that: each scheme's gather minus the
+    reference, on one common amplitude scale, so more residual means a worse scheme. A time gain
+    proportional to t squared is applied, the standard seismic correction for geometric spreading,
+    which lifts the weak late arrivals so the residual is visible over the whole record rather
+    than only near the top. Read this way the order is plain: bfloat16 leaves a large residual, MX
+    the smallest, FP16 in between.
     """
     nt, nrec = rec_ref.shape
     band = slice(nrec // 2 - 30, nrec // 2 + 30, 2)        # about 30 central traces
     t = np.linspace(0, TN / 1000.0, nt)
     ref = np.asarray(rec_ref)[:, band].astype(np.float64)
-    # Drive the direct arrival off scale so it clips flat and the weak reflections show, on one
-    # common amplitude scale across the panels.
-    common = (np.max(np.abs(ref)) + 1e-30) / WIGGLE_SATURATION
 
-    panels = [("full precision", ref)] + [(name, np.asarray(rec)[:, band].astype(np.float64))
-                                          for (name, rec, _c) in traces]
-    n = len(panels)
-    fig, axes = plt.subplots(1, n, figsize=(2.9 * n, 6.4), sharey=True)
+    # Time-scaling gain, t squared, normalised to about one in the middle of the record so the
+    # numbers stay in a sensible range.
+    tgain = ((t + 0.02) / np.mean(t + 0.02)) ** 2.0
+
+    # Residual of each scheme against full precision, with the time gain applied.
+    resid = [(name, (np.asarray(rec)[:, band].astype(np.float64) - ref) * tgain[:, None])
+             for (name, rec, _c) in traces]
+    allmax = max(np.max(np.abs(r)) for _, r in resid) + 1e-30
+    common = allmax / 6.0                                   # common scale, biggest residual saturates
+
     short = {"float16 + global scaling": "FP16 + scaling", "bfloat16": "bfloat16",
              "microscaling, 12 mantissa bits": "MX, 12 bits"}
-    for ax, (name, data) in zip(axes, panels):
+    n = len(resid)
+    fig, axes = plt.subplots(1, n, figsize=(2.9 * n, 6.4), sharey=True)
+    for ax, (name, data) in zip(axes, resid):
         _wiggle(ax, data, t, norm=common)
         ax.set_title(short.get(name, name), fontsize=10)
         ax.set_xlabel("trace")
     axes[0].set_ylabel("time (s)")
-    fig.suptitle("Receiver gather for each scheme (direct arrival saturated, reflections revealed)")
+    fig.suptitle("Difference from full precision (time-scaled, common amplitude scale)")
     fig.tight_layout()
     fig.savefig(os.path.join(outdir, "fig3_trace_errors.png"), dpi=130)
     plt.close(fig)

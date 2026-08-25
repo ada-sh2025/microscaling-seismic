@@ -99,7 +99,7 @@ c.push(h2("Scoring the reflections, not the direct arrival"));
 c.push(p("A single global number, in decibels or otherwise, is dominated by the strong direct arrival that runs along the top of the record. That arrival travels through the near-surface water layer, never enters the geology, and carries none of the image, so it is the easy part for any format to reproduce. To score the schemes on the part that matters, the direct arrival is removed."));
 c.push(pm([["The method, proposed in the review meeting, is a water-model subtraction. ",true],["A second model is run that is water everywhere, at the surface velocity, with the source, receivers, geometry and time-stepping kept exactly the same and only the velocity changed. With no contrasts it produces the direct arrival and nothing else, computed accurately. Subtracting it from the real record removes the direct arrival and leaves the reflected energy on its own. The MX run is put through the water model too, so what it removes is the direct arrival MX itself produced.",false]]));
 c.push(img("H2_water_gather.png",470,256));
-c.push(cap("Figure 4b. The full record, the water model (direct arrival only), and their difference (the reflections). The strong arrival is gone from the difference, leaving the weak reflected energy."));
+c.push(cap("Figure 4b. The full record, the water model (direct arrival only), and their difference (the reflections), with the difference time-scaled so the weak deep reflections show. The strong arrival is gone from the difference, leaving the reflected energy."));
 c.push(pm([["On this model the reflections carry about 45 percent of the record's energy and the direct arrival the other 55 percent, so the global number is roughly half made of the part we do not care about. Scored on the reflections alone, every scheme sits lower. ",false],["At 12 mantissa bits the global SNR is 49 dB, but the reflection-only SNR is 41 dB",true],[", about 8 dB stricter, and the same gap holds across bit widths.",false]]));
 c.push(img("H1_water_snr.png",430,273));
 c.push(cap("Figure 4c. Global SNR against reflection-only SNR, by bit width. The reflection figure is uniformly lower, since it drops the easy direct arrival."));
@@ -134,11 +134,11 @@ c.push(pm([["An honest limit on the baseline. ",true],["The per field scaling im
 c.push(pageBreak());
 // Visual evidence
 c.push(h1("Visual evidence"));
-c.push(h2("Receiver gather for each scheme"));
+c.push(h2("Difference from full precision, per scheme"));
 c.push(img("C3_trace_errors.png",470,259));
-c.push(cap("Figure 6. A band of receiver traces in the wiggle display, one panel per scheme. The direct arrival is saturated so the weak reflections, which carry the image, are visible."));
-c.push(p("The strong direct arrival that runs along the top is the least interesting part of the record, and on a natural amplitude scale it dominates the display and hides everything else. Here it is deliberately driven off scale and clipped flat, so the much weaker reflected and refracted energy underneath shows through. It is on those reflections that the schemes should be judged, since they are what an image is built from."));
-c.push(p("Read that way, full precision, FP16 with scaling, and MX all reproduce the reflection pattern, but MX stays closest to the reference while FP16 and bfloat16 add more spurious wiggle to the weak arrivals, bfloat16 the most. A qualification belongs with this figure: the single relative error number quoted elsewhere is dominated by the strong direct arrival, so it mainly reports how well the strong, easy part of the record is preserved, not the weak reflections seen here. A measure aimed at the reflections would tell a sharper story, and choosing one is noted as future work."));
+c.push(cap("Figure 6. Each scheme's receiver gather minus the full-precision gather, on one common amplitude scale, with a time-scaling gain applied. More residual means a worse scheme."));
+c.push(p("Drawing the gathers themselves is not very telling, because at a usable setting MX and FP16 both reproduce the record closely and the panels look almost identical, which is really a statement that both are accurate. To see the differences the figure plots the residual instead, each scheme minus full precision, on one common scale so that more residual means a worse scheme. A time gain proportional to time squared is applied, the standard seismic correction for geometric spreading, which lifts the weak late arrivals so the residual is visible over the whole record rather than only near the top."));
+c.push(pm([["Read this way the order is plain. ",true],["bfloat16 leaves a large residual across the record, MX the smallest, and FP16 sits in between, its residual growing on the deeper late arrivals. This matches the error numbers, MX at 3.4e-3 against FP16 at 6.1e-3 and bfloat16 at 6.1e-2, now made visible: on the global record MX and FP16 are close and both far ahead of bfloat16, while the sharper separation between MX and FP16 shows up on the reflection-only measure that follows.",false]]));
 c.push(h2("Wavefield comparison"));
 c.push(img("B3_wavefield_comparison.png",300,500));
 c.push(cap("Figure 7. Reference wavefield, and the MX wavefield with its difference at 14 and at 10 mantissa bits. Each difference is drawn on its own much finer scale, stated in its colour bar, since on the wavefield scale it would be invisible."));
@@ -149,7 +149,7 @@ c.push(pageBreak());
 c.push(h2("Receiver gather"));
 c.push(img("B4_trace_comparison.png",360,315));
 c.push(cap("Figure 8. A band of receiver traces, full precision against MX at 14 mantissa bits, with the direct arrival saturated so the reflections are visible."));
-c.push(p("The same saturated display as Figure 6, now full precision against MX alone. With the direct arrival clipped flat, the weak reflections stand out, and the two panels reproduce them in the same places with the same character. At this bit width MX preserves not just the strong arrival but the weak reflected energy the image depends on."));
+c.push(p("A wiggle gather, full precision against MX, with the direct arrival saturated so the weak reflections show. The two panels reproduce them in the same places with the same character. At this bit width MX preserves not just the strong arrival but the weak reflected energy the image depends on."));
 
 // Baseline
 c.push(h1("Baseline validation"));
