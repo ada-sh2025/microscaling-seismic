@@ -257,6 +257,35 @@ def snr_db(a, b):
     return np.inf if e == 0 else -20.0 * np.log10(e)
 
 
+def time_gain(nt, power=1.0):
+    """A gain that grows along the record's time axis, the standard correction for geometric
+    spreading. Returned as a length-nt vector normalised to about one in the middle of the record,
+    so the overall amplitude stays sensible. power=1 is a linear gain, power=2 a t-squared gain."""
+    t = np.arange(nt, dtype=np.float64)
+    t = (t + 1.0) / np.mean(t + 1.0)
+    return t ** power
+
+
+def rel_l2_timescaled(a, b, power=1.0):
+    """Relative L2 error after applying a time gain down the record's first axis.
+
+    Without the gain the error is dominated by the strong early arrivals, so it mostly measures
+    how well the top of the record is preserved. Multiplying both records by a gain that grows
+    with time lifts the weak late arrivals to a comparable weight, so the error is spread evenly
+    across arrivals rather than favouring the strong ones. Both inputs are shot records of shape
+    (time, receiver)."""
+    a = np.asarray(a, np.float64); b = np.asarray(b, np.float64)
+    g = time_gain(a.shape[0], power)[:, None]
+    ag = a * g; bg = b * g
+    return np.linalg.norm(ag - bg) / np.linalg.norm(bg)
+
+
+def snr_db_timescaled(a, b, power=1.0):
+    """Time-scaled signal-to-noise ratio in decibels; see rel_l2_timescaled for the weighting."""
+    e = rel_l2_timescaled(a, b, power)
+    return np.inf if e == 0 else -20.0 * np.log10(e)
+
+
 def error_growth(hist_mx, hist_ref):
     """Relative wavefield error at each stored time step, so the accumulation can be plotted.
 

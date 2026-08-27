@@ -37,7 +37,7 @@ pip install devito pytest matplotlib numpy
 ```
 
 `pytest` is required even though no tests are run here — `examples.seismic` fails to import
-without it. Node.js is only needed if you want to rebuild the report from `build_report_en.js`.
+without it. Node.js is only needed if you want to rebuild the report from `build_final_report.js`.
 
 The Marmousi velocity file is downloaded automatically on first run to `data/Simple2D/`. An
 internet connection is needed for that one download.
@@ -166,10 +166,10 @@ Combines FP16 arithmetic with MX storage and checks whether the two errors compo
 
 ```bash
 npm install docx
-node build_report_en.js      # needs the figures in ../figures
+node build_final_report.js      # needs the figures in ../figures
 ```
 
-Writes `report_final.docx`. The script embeds the PNGs from the `figures/` folder, so regenerate
+Writes `final_report.docx`. The script embeds the PNGs from the `figures/` folder, so regenerate
 those first if you have changed any experiment.
 
 ---

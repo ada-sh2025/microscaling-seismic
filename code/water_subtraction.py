@@ -39,7 +39,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-from mx_experiment_marmousi import (Harness, quantize_dequantize, rel_l2, snr_db,
+from mx_experiment_marmousi import (Harness, quantize_dequantize, rel_l2, snr_db, snr_db_timescaled,
                                     load_cropped_vp, TN, SPACING, NREC)
 
 OUTDIR = "water_subtraction_results"
@@ -83,9 +83,9 @@ def main():
     rows = []
     print(f"  {'mantissa':>8s}{'bits/val':>9s}{'global SNR dB':>15s}{'reflection SNR dB':>19s}")
     for mb in BITS:
-        g = snr_db(full_mx[mb], full_ref)                       # scored on the whole record
+        g = snr_db_timescaled(full_mx[mb], full_ref)            # time-scaled whole-record metric
         refl_mx = full_mx[mb] - water_mx[mb]                    # MX reflections
-        r = snr_db(refl_mx, refl_ref)                           # scored on reflections only
+        r = snr_db_timescaled(refl_mx, refl_ref)                # reflections only, time-scaled
         bits = mb + 2 + 8.0 / BLOCK
         rows.append((mb, bits, g, r))
         print(f"  {mb:>8d}{bits:>9.2f}{g:>15.1f}{r:>19.1f}")
@@ -99,12 +99,12 @@ def main():
     fig, ax = plt.subplots(figsize=(8.2, 5.2))
     bx = [r[1] for r in rows]
     ax.plot(bx, [r[2] for r in rows], marker="o", lw=2, color="tab:blue",
-            label="global SNR (whole record, direct arrival dominates)")
+            label="time-scaled SNR (whole record)")
     ax.plot(bx, [r[3] for r in rows], marker="s", lw=2, color="tab:red",
-            label="reflection SNR (direct arrival removed)")
+            label="reflection-only SNR (water model removed)")
     ax.set_xlabel("bits stored per wavefield value")
     ax.set_ylabel("signal-to-noise ratio (dB), higher is better")
-    ax.set_title("Global vs reflection-only SNR")
+    ax.set_title("Time-scaled whole-record vs reflection-only SNR")
     ax.grid(alpha=0.3)
     ax.legend(loc="lower right", fontsize=9)
     fig.tight_layout()

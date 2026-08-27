@@ -186,6 +186,18 @@ def rel_l2(a, b):
     return np.linalg.norm(a - b) / np.linalg.norm(b)
 
 
+TS_POWER = 1.0   # time-scaling exponent for the accuracy metric (linear gain)
+
+
+def rel_l2_timescaled(a, b, power=TS_POWER):
+    """Relative L2 error after a time gain down the record's first axis, so the weak late
+    arrivals weigh as much as the strong early ones instead of being swamped by them."""
+    a = np.asarray(a, np.float64); b = np.asarray(b, np.float64)
+    t = np.arange(a.shape[0], dtype=np.float64)
+    g = (((t + 1.0) / np.mean(t + 1.0)) ** power)[:, None]
+    return np.linalg.norm((a - b) * g) / np.linalg.norm(b * g)
+
+
 def main():
     os.makedirs(OUTDIR, exist_ok=True)
     rng = np.random.default_rng(0)
@@ -214,14 +226,14 @@ def main():
     print("scheme                             bits    SNR(dB)     error")
     record("FP32 (reference)", 32.0, 0.0)
 
-    err = rel_l2(H.run(store_field=lambda a, j: fp16_naive(a)), rec_ref)
+    err = rel_l2_timescaled(H.run(store_field=lambda a, j: fp16_naive(a)), rec_ref)
     record("FP16, no scaling", 16.0, err)
 
-    err = rel_l2(H.run(store_field=lambda a, j: fp16_scaled(a, scales[j])), rec_ref)
+    err = rel_l2_timescaled(H.run(store_field=lambda a, j: fp16_scaled(a, scales[j])), rec_ref)
     record("FP16, per field scaling (FO)", 16.0, err)
 
     for mb in [4, 6, 8, 10, 11, 12, 14]:
-        err = rel_l2(H.run(store_field=lambda a, j, mb=mb: quantize_dequantize(a, 32, mb, "nearest", rng)),
+        err = rel_l2_timescaled(H.run(store_field=lambda a, j, mb=mb: quantize_dequantize(a, 32, mb, "nearest", rng)),
                      rec_ref)
         record(f"MX, {mb} mantissa bits", mx_bits(32, mb), err)
 
@@ -239,12 +251,12 @@ def main():
                        zorder=4, label=r["name"])
     ax.set_yscale("log")
     ax.set_xlabel("bits stored per wavefield value")
-    ax.set_ylabel("relative error of the stress receiver record")
+    ax.set_ylabel("time-scaled relative error of the stress receiver record")
     # Signal-to-noise ratio in decibels on the right, the field's usual unit and the one the
     # target is set in. Same information as the left axis: SNR(dB) = -20 log10(relative error).
     secax = ax.secondary_yaxis("right", functions=(lambda e: -20.0 * np.log10(np.clip(e, 1e-300, None)),
                                                     lambda d: 10.0 ** (-d / 20.0)))
-    secax.set_ylabel("signal-to-noise ratio (dB)")
+    secax.set_ylabel("time-scaled signal-to-noise ratio (dB)")
     # Point out the 11 mantissa bit setting, since it is the aggressive-but-still-good case.
     p11 = next((r for r in ours if "11 mantissa" in r["name"]), None)
     if p11:

@@ -67,7 +67,10 @@ import matplotlib.pyplot as plt
 
 # The solver harness and the microscaling routine are imported unchanged from the main
 # experiment, so that every scheme really is being tested under identical conditions.
-from mx_experiment_marmousi import Harness, quantize_dequantize, rel_l2, snr_db, TN, _wiggle, WIGGLE_SATURATION
+from mx_experiment_marmousi import (Harness, quantize_dequantize, rel_l2, snr_db,
+                                    rel_l2_timescaled, snr_db_timescaled, TN, _wiggle, WIGGLE_SATURATION)
+
+TS_POWER = 1.0   # time-scaling exponent for the accuracy metric (linear gain)
 
 OUTDIR = "comparison_results"
 
@@ -176,13 +179,13 @@ def plot_cost_vs_accuracy(results, fp32_own_error, outdir):
 
     ax.set_yscale("log")
     ax.set_xlabel("bits stored per wavefield value, which is what the memory traffic scales with")
-    ax.set_ylabel("relative error of the shot record")
+    ax.set_ylabel("time-scaled relative error of the shot record")
     # Signal-to-noise ratio in decibels is the field's usual way of reporting this, so it goes on
     # the right as the primary reading. It is the same information as the left axis, since
     # SNR(dB) = -20 log10(relative error); the two axes stay locked together.
     secax = ax.secondary_yaxis("right", functions=(lambda e: -20.0 * np.log10(np.clip(e, 1e-300, None)),
                                                     lambda d: 10.0 ** (-d / 20.0)))
-    secax.set_ylabel("signal-to-noise ratio (dB)")
+    secax.set_ylabel("time-scaled signal-to-noise ratio (dB)")
     ax.set_title("Cost against accuracy (cropped Marmousi)")
     ax.grid(alpha=0.3, which="both")
     ax.legend(loc="lower left", fontsize=9)
@@ -212,7 +215,7 @@ def plot_block_size(block_results, outdir):
                     textcoords="offset points", xytext=(6, 6), fontsize=9)
     ax.set_yscale("log")
     ax.set_xlabel("bits stored per value, including the share of the block exponent")
-    ax.set_ylabel("relative error of the shot record")
+    ax.set_ylabel("time-scaled relative error of the shot record")
     ax.set_title(f"Effect of block size ({BLOCK_SWEEP_BITS} mantissa bits)")
     ax.grid(alpha=0.3, which="both")
     fig.tight_layout()
@@ -227,7 +230,7 @@ def plot_traces(rec_ref, traces, outdir):
     FP16 both reproduce the record closely and the panels look alike. What matters is the
     difference from full precision, so this plots exactly that: each scheme's gather minus the
     reference, on one common amplitude scale, so more residual means a worse scheme. A time gain
-    proportional to t squared is applied, the standard seismic correction for geometric spreading,
+    proportional to time (a linear gain) is applied, the standard correction for geometric spreading,
     which lifts the weak late arrivals so the residual is visible over the whole record rather
     than only near the top. Read this way the order is plain: bfloat16 leaves a large residual, MX
     the smallest, FP16 in between.
@@ -237,9 +240,9 @@ def plot_traces(rec_ref, traces, outdir):
     t = np.linspace(0, TN / 1000.0, nt)
     ref = np.asarray(rec_ref)[:, band].astype(np.float64)
 
-    # Time-scaling gain, t squared, normalised to about one in the middle of the record so the
+    # Time-scaling gain, linear in t, normalised to about one in the middle of the record so the
     # numbers stay in a sensible range.
-    tgain = ((t + 0.02) / np.mean(t + 0.02)) ** 2.0
+    tgain = ((t + 0.02) / np.mean(t + 0.02)) ** 1.0
 
     # Residual of each scheme against full precision, with the time gain applied.
     resid = [(name, (np.asarray(rec)[:, band].astype(np.float64) - ref) * tgain[:, None])
@@ -288,7 +291,7 @@ def main():
     # practical purposes, as accurate as float32.
     H64 = Harness(dtype=np.float64)
     rec_64, _, _ = H64.run(quant=None)
-    fp32_own_error = rel_l2(rec_ref, rec_64)
+    fp32_own_error = rel_l2_timescaled(rec_ref, rec_64, TS_POWER)
     print(f"float32 own error against float64: {fp32_own_error:.3e}")
     print("that is the level a scheme must reach to count as being as good as float32\n")
 
@@ -310,20 +313,20 @@ def main():
 
     # float16 with no scaling. Included to test the assumption, not to confirm it.
     rec, _, _ = H.run(quant=store_float16_naive)
-    e = rel_l2(rec, rec_ref)
+    e = rel_l2_timescaled(rec, rec_ref, TS_POWER)
     results.append(dict(name="float16, no scaling", family="published", bits=16.0, err=e))
     print(f"  float16, no scaling              16.00     {e:.3e}")
 
     # float16 with the published global scaling.
     rec_f16, _, _ = H.run(quant=lambda a: store_float16_global(a, scale))
-    e = rel_l2(rec_f16, rec_ref)
+    e = rel_l2_timescaled(rec_f16, rec_ref, TS_POWER)
     results.append(dict(name="float16 + global scaling", family="published", bits=16.0, err=e))
     traces.append(("float16 + global scaling", rec_f16, "tab:red"))
     print(f"  float16 + global scaling         16.00     {e:.3e}")
 
     # bfloat16.
     rec_bf, _, _ = H.run(quant=store_bfloat16)
-    e = rel_l2(rec_bf, rec_ref)
+    e = rel_l2_timescaled(rec_bf, rec_ref, TS_POWER)
     results.append(dict(name="bfloat16", family="published", bits=16.0, err=e))
     traces.append(("bfloat16", rec_bf, "tab:orange"))
     print(f"  bfloat16                         16.00     {e:.3e}")
@@ -335,7 +338,7 @@ def main():
     peak = float(np.abs(hist_ref).max())
     int16_scale = 32767.0 / max(peak, 1e-30)
     rec_i16, _, _ = H.run(quant=lambda a: store_int16_scaled(a, int16_scale))
-    e = rel_l2(rec_i16, rec_ref)
+    e = rel_l2_timescaled(rec_i16, rec_ref, TS_POWER)
     results.append(dict(name="int16 + scaling", family="published", bits=16.0, err=e))
     print(f"  int16 + scaling                  16.00     {e:.3e}")
 
@@ -343,7 +346,7 @@ def main():
     print()
     for mb in MX_BITS:
         rec, _, _ = H.run(quant=lambda a, mb=mb: quantize_dequantize(a, MX_BLOCK, mb, "nearest", rng))
-        e = rel_l2(rec, rec_ref)
+        e = rel_l2_timescaled(rec, rec_ref, TS_POWER)
         b = mx_bits_per_value(MX_BLOCK, mb)
         results.append(dict(name=f"MX block {MX_BLOCK}, {mb} mantissa bits",
                             family="ours", bits=b, err=e))
@@ -359,7 +362,7 @@ def main():
     for bsz in BLOCK_SWEEP:
         rec, _, _ = H.run(quant=lambda a, bsz=bsz: quantize_dequantize(a, bsz, BLOCK_SWEEP_BITS,
                                                                        "nearest", rng))
-        e = rel_l2(rec, rec_ref)
+        e = rel_l2_timescaled(rec, rec_ref, TS_POWER)
         b = mx_bits_per_value(bsz, BLOCK_SWEEP_BITS)
         block_results.append(dict(block=bsz, bits=b, err=e))
         print(f"  MX block {bsz:2d}, {BLOCK_SWEEP_BITS} mantissa bits    {b:5.2f}     {e:.3e}")
@@ -382,7 +385,7 @@ def main():
     for r in sorted(results, key=lambda r: r["err"]):
         snr = -20.0 * np.log10(max(r["err"], 1e-300))
         print(f"  {r['name']:<32s}{r['bits']:>7.2f}{snr:>11.1f}{r['err']:>13.2e}")
-    print(f"  {'float32 vs float64 (pass mark)':<32s}{'':>7s}{snr_db(rec_ref, rec_64):>11.1f}"
+    print(f"  {'float32 vs float64 (pass mark)':<32s}{'':>7s}{snr_db_timescaled(rec_ref, rec_64, TS_POWER):>11.1f}"
           f"{fp32_own_error:>13.2e}")
 
     plot_cost_vs_accuracy(results, fp32_own_error, OUTDIR)
