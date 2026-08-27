@@ -103,7 +103,7 @@ def main():
                     color="tab:red", ha="center")
     ax.set_xlabel("bits stored per wavefield value")
     ax.set_ylabel("signal-to-noise ratio (dB), higher is better")
-    ax.set_title("Single-frame representation error vs error accumulated over the solve")
+    ax.set_title("Single-frame vs accumulated error")
     ax.grid(alpha=0.3)
     ax.legend(loc="lower right", fontsize=9)
     fig.text(0.5, 0.01, "red = how many times propagation amplifies the single-frame error",

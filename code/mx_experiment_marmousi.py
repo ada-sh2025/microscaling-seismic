@@ -255,6 +255,22 @@ def snr_db(a, b):
     """
     e = rel_l2(a, b)
     return np.inf if e == 0 else -20.0 * np.log10(e)
+
+
+def error_growth(hist_mx, hist_ref):
+    """Relative wavefield error at each stored time step, so the accumulation can be plotted.
+
+    Both arguments are stacks of wavefield snapshots taken at the same steps; this returns one
+    relative L2 error per snapshot, which is the curve plot_error_growth draws.
+    """
+    a = np.asarray(hist_mx, np.float64)
+    b = np.asarray(hist_ref, np.float64)
+    n = min(a.shape[0], b.shape[0])
+    out = np.zeros(n)
+    for k in range(n):
+        denom = np.linalg.norm(b[k])
+        out[k] = np.linalg.norm(a[k] - b[k]) / denom if denom > 0 else 0.0
+    return out
     """Relative wavefield error at every time step, which shows how the error accumulates.
 
     This is the important curve for the project. A single pass through MX only loses a
@@ -297,7 +313,7 @@ def plot_accuracy_vs_bits(results, fp32_own_error, outdir):
     ax.set_yscale("log")
     ax.set_xlabel("mantissa bits kept per value")
     ax.set_ylabel("relative error of the shot record")
-    ax.set_title("Accuracy against storage precision, cropped Marmousi")
+    ax.set_title("Accuracy against storage precision")
     ax.grid(alpha=0.3, which="both")
     ax.legend()
     fig.tight_layout(); fig.savefig(os.path.join(outdir, "fig1_accuracy_vs_bits.png"), dpi=130)
@@ -427,7 +443,7 @@ def plot_trace_comparison(rec_ref, rec_mx, bits, outdir):
     axes[1].set_title(f"MX, {bits} mantissa bits")
     for ax in axes:
         ax.set_xlabel("trace")
-    fig.suptitle("Receiver gather, full precision against MX (direct arrival saturated)")
+    fig.suptitle("Receiver gather: full precision against MX")
     fig.tight_layout(); fig.savefig(os.path.join(outdir, "fig4_trace_comparison.png"), dpi=130)
     plt.close(fig)
 

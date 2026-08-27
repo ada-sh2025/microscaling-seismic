@@ -132,9 +132,9 @@ def main():
     for r in rows:
         note = r[7] if r[7] in ("strip (memory)", "square") else r[0]
         axL.annotate(note, (r[3], r[4]), textcoords="offset points", xytext=(6, 6), fontsize=9)
-    axL.set_xlabel("block aspect ratio  (1 = square, higher = more strip-like)")
+    axL.set_xlabel("aspect ratio (1 = square)")
     axL.set_ylabel("signal-to-noise ratio (dB), higher is better")
-    axL.set_title("Accuracy: squarer is more accurate")
+    axL.set_title("Accuracy")
     axL.grid(alpha=0.3)
 
     axR.plot(xs, [r[5] for r in rows], "s-", lw=2, color="tab:orange")
@@ -144,13 +144,12 @@ def main():
     for r in rows:
         note = r[7] if r[7] in ("strip (memory)", "square") else r[0]
         axR.annotate(note, (r[3], r[5]), textcoords="offset points", xytext=(6, 6), fontsize=9)
-    axR.set_xlabel("block aspect ratio  (1 = square, higher = more strip-like)")
-    axR.set_ylabel("pack + unpack time per call (ms), lower is better")
-    axR.set_title("Cost: 2D tiling adds a little time")
+    axR.set_xlabel("aspect ratio (1 = square)")
+    axR.set_ylabel("pack+unpack time per call (ms)")
+    axR.set_title("Pack/unpack cost")
     axR.grid(alpha=0.3)
 
-    fig.suptitle(f"Block shape: accuracy vs pack/unpack cost (fixed 32-value block, "
-                 f"{MANTISSA}-bit", fontsize=12)
+    fig.suptitle("Block shape: accuracy against pack/unpack cost", fontsize=12)
     fig.tight_layout(rect=[0, 0, 1, 0.96])
     fig.savefig(os.path.join(OUTDIR, "fig_block_shape.png"), dpi=130)
     plt.close(fig)

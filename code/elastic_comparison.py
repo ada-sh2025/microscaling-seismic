@@ -250,7 +250,7 @@ def main():
     if p11:
         ax.annotate("11 mantissa bits", (p11["bits"], p11["err"]),
                     textcoords="offset points", xytext=(8, 8), fontsize=9, color="tab:blue")
-    ax.set_title("Elastic kernel: MX against Fabien-Ouellet style scaling")
+    ax.set_title("Elastic kernel: MX against FP16 scaling")
     ax.grid(alpha=0.3, which="both")
     ax.legend(loc="upper right", fontsize=9)
     fig.tight_layout()

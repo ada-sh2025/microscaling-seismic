@@ -130,9 +130,12 @@ def plot_efficiency_vs_error(rows, kernel, outdir):
     style = {"float32":                  ("*", "k",          210),
              "float16, no scaling":      ("^", "tab:green",  130),
              "float16 + global scaling": ("s", "tab:red",    130),
+             "int16 + global scaling":   ("v", "tab:purple", 120),
              "bfloat16":                 ("D", "tab:orange", 120)}
     for r in rows:
         if r["family"] == "ours":
+            continue
+        if r["name"] not in style:
             continue
         m, c, s = style[r["name"]]
         ax.scatter(r["err"], predicted_speedup(kernel, r["bits"]),
@@ -180,7 +183,7 @@ def plot_by_kernel(rows, outdir):
     ax.axhline(1.0, color="k", lw=0.9)
     ax.set_xticks(x); ax.set_xticklabels(labels, fontsize=9)
     ax.set_ylabel("predicted speedup over float32")
-    ax.set_title("Where the saving comes from: the more wavefield the kernel carries, the more it gains")
+    ax.set_title("Speed-up by kernel: more wavefield, more gain")
     ax.legend(fontsize=9)
     ax.grid(alpha=0.3, axis="y")
     fig.tight_layout()

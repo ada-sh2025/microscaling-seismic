@@ -104,7 +104,7 @@ def main():
             label="reflection SNR (direct arrival removed)")
     ax.set_xlabel("bits stored per wavefield value")
     ax.set_ylabel("signal-to-noise ratio (dB), higher is better")
-    ax.set_title("Global SNR against reflection-only SNR, after water subtraction")
+    ax.set_title("Global vs reflection-only SNR")
     ax.grid(alpha=0.3)
     ax.legend(loc="lower right", fontsize=9)
     fig.tight_layout()
@@ -132,7 +132,7 @@ def main():
     axes[2].set_title("reflections (time-scaled)")
     for a in axes:
         a.set_xlabel("trace")
-    fig.suptitle("Water-model subtraction removes the direct arrival and leaves the reflections",
+    fig.suptitle("Water subtraction: full record minus water leaves the reflections",
                  fontsize=12)
     fig.tight_layout()
     fig.savefig(os.path.join(OUTDIR, "fig_water_gather.png"), dpi=130)
