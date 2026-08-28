@@ -162,29 +162,6 @@ Combines FP16 arithmetic with MX storage and checks whether the two errors compo
 
 ---
 
-## Rebuilding the report (optional)
-
-```bash
-npm install docx
-node build_final_report.js      # needs the figures in ../figures
-```
-
-Writes `final_report.docx`. The script embeds the PNGs from the `figures/` folder, so regenerate
-those first if you have changed any experiment.
-
----
-
-## Repository layout
-
-```
-code/        all Python scripts and the report builder
-figures/     every figure used in the report
-MX_Interim_Report_EN.docx    the interim report
-MX_Speaker_Script.docx       speaker script for the briefing deck
-```
-
----
-
 ## Notes and limitations
 
 - **Emulation, not hardware.** MX is emulated in numpy. Accuracy numbers are hardware-independent
