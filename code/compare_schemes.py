@@ -186,6 +186,8 @@ def plot_cost_vs_accuracy(results, fp32_own_error, outdir):
     secax = ax.secondary_yaxis("right", functions=(lambda e: -20.0 * np.log10(np.clip(e, 1e-300, None)),
                                                     lambda d: 10.0 ** (-d / 20.0)))
     secax.set_ylabel("time-scaled signal-to-noise ratio (dB)")
+    secax.set_yticks([20, 40, 60, 80])          # clean, evenly spaced dB ticks
+    secax.minorticks_off()                       # drop the crowded auto minor ticks at the top
     ax.set_title("Cost against accuracy (cropped Marmousi)")
     ax.grid(alpha=0.3, which="both")
     ax.legend(loc="lower left", fontsize=9)

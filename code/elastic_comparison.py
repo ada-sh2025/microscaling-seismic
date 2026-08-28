@@ -257,6 +257,8 @@ def main():
     secax = ax.secondary_yaxis("right", functions=(lambda e: -20.0 * np.log10(np.clip(e, 1e-300, None)),
                                                     lambda d: 10.0 ** (-d / 20.0)))
     secax.set_ylabel("time-scaled signal-to-noise ratio (dB)")
+    secax.set_yticks([20, 40, 60, 80])          # clean, evenly spaced dB ticks
+    secax.minorticks_off()
     # Point out the 11 mantissa bit setting, since it is the aggressive-but-still-good case.
     p11 = next((r for r in ours if "11 mantissa" in r["name"]), None)
     if p11:
