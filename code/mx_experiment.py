@@ -18,15 +18,6 @@ switched OFF (`quant=None`). Comparing MX-on vs MX-off through one code path
 isolates the error caused purely by quantisation. (The M1 packaged FP32/FP64
 files remain a useful external cross-check.)
 
-What is real vs. what is a stub
--------------------------------
-  * quantize_dequantize(...)  -> WORKING, but a *simplified* MX emulation
-    (shared exponent per block + N mantissa bits + nearest/stochastic rounding).
-    TODO: swap in exact OCP MX formats (MXFP e2m1/e3m2/e2m3, MXINT8, scale=E8M0).
-  * run_forward_mx(...)       -> WORKING in-loop injection + error-growth capture.
-  * metrics + sweep           -> WORKING.
-  * bandwidth / bytes / runtime savings are NOT measured here — this file is the
-    ACCURACY half only. Cost comes from a separate bandwidth model + micro-kernel.
 
 Run:  python3 mx_experiment.py     (needs m1_baseline.py in the same folder)
 """

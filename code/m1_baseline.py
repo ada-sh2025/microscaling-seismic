@@ -29,9 +29,7 @@ import numpy as np
 from examples.seismic import Model, AcquisitionGeometry
 from examples.seismic.acoustic import AcousticWaveSolver
 
-# ---------------------------------------------------------------------------
 # Configuration  (defaults match the coursework; change freely for experiments)
-# ---------------------------------------------------------------------------
 EXTENT      = (1000.0, 1000.0)   # physical domain size in metres (Lx, Lz)
 SHAPE       = (101, 101)         # grid points (nx, nz)  -- fixed extent, so this only changes sampling
 ORIGIN      = (0.0, 0.0)
